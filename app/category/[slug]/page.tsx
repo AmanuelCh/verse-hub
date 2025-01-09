@@ -1,19 +1,38 @@
+'use client';
+
 import { verses } from '@/data/verses';
 import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
 
-export default async function CategoryPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  // Await the params to get the slug
-  const { slug } = await params;
+// Define the type for params
+type Params = {
+  slug: string;
+};
+
+export default function CategoryPage({ params }: { params: Promise<Params> }) {
+  // Use React's use hook to unwrap params
+  const { slug } = React.use(params);
 
   const categorySlug = slug.charAt(0).toUpperCase() + slug.slice(1);
   const category = decodeURIComponent(categorySlug);
   const categoryVerses = verses.filter(
     (verse) => verse.category.toLowerCase() === category.toLowerCase()
   );
+
+  const [randomVerse, setRandomVerse] = useState(categoryVerses[0]);
+  const [randomIndex, setRandomIndex] = useState(
+    Math.floor(Math.random() * categoryVerses.length)
+  );
+
+  const handleRandomize = () => {
+    setRandomIndex(Math.floor(Math.random() * categoryVerses.length));
+  };
+
+  useEffect(() => {
+    if (categoryVerses.length > 0) {
+      setRandomVerse(categoryVerses[randomIndex]);
+    }
+  }, [randomIndex, categoryVerses]);
 
   return (
     <>
@@ -23,10 +42,30 @@ export default async function CategoryPage({
 
       <div className='min-h-screen p-8 max-w-5xl mx-auto'>
         <h1 className='text-4xl font-bold mb-8 text-center'>{category}</h1>
-        {/* Check if there are verses available before accessing categoryDesc */}
         {categoryVerses.length > 0 && (
           <p className='mb-8 text-center'>{categoryVerses[0].categoryDesc}</p>
         )}
+
+        <div className='mb-8 bg-white p-6 border-4 border-black shadow-[8px_8px_0_0_#000]'>
+          <h2 className='text-2xl font-bold mb-4'>Random {category} Verse</h2>
+          <p className='md:text-xl mb-4'>{randomVerse.text}</p>
+          <p className='text-right font-bold'>{randomVerse.reference}</p>
+          <div className='mt-4 flex items-center justify-center'>
+            <button
+              className='bg-black text-white px-6 py-3 font-bold hover:bg-gray-800 transition-colors duration-300'
+              onClick={handleRandomize}
+            >
+              Randomize
+            </button>
+          </div>
+        </div>
+
+        <div className='my-7'>
+          <h2 className='text-3xl font-bold text-center'>
+            All Verses in this Category
+          </h2>
+        </div>
+
         <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6'>
           {categoryVerses.map((verse) => (
             <Link
@@ -40,6 +79,7 @@ export default async function CategoryPage({
             </Link>
           ))}
         </div>
+
         <div className='mt-8 text-center'>
           <Link
             href='/'
